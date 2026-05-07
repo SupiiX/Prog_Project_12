@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c 'import ast, sys *)",
+      "Bash(python -c ' *)",
+      "Bash(python -m pip show pandas numpy shapely folium matplotlib scipy tqdm)",
+      "Bash(python -c \"import shapely, folium, matplotlib, scipy; print\\('shapely:', shapely.__version__\\); print\\('folium:', folium.__version__\\); print\\('matplotlib:', matplotlib.__version__\\); print\\('scipy:', scipy.__version__\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"import shapely, folium, matplotlib, scipy; print\\('OK'\\)\")",
+      "Bash(python src/signal_model.py)",
+      "Bash(python src/rasterizer.py)",
+      "Bash(python src/gap_analyzer.py)",
+      "Bash(python src/simulator.py)",
+      "Bash(.venv/Scripts/python.exe src/data_loader.py)",
+      "Bash(.venv/Scripts/python.exe main.py)",
+      "Bash(.venv/Scripts/python.exe -m pip install contextily --quiet)",
+      "Bash(.venv/Scripts/python.exe -c \"import contextily; print\\(contextily.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "WebSearch",
+      "Bash(.venv/Scripts/python.exe -m pip install tkintermapview --quiet)",
+      "Bash(.venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import tkintermapview; print\\('tkintermapview version:', tkintermapview.__version__\\)\")",
+      "Bash(Select-Object FullName, Length)"
+    ]
+  }
+}
