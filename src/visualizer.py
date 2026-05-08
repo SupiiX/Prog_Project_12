@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.figure
 import matplotlib.colors as mcolors
 import folium
-from folium.plugins import HeatMap
 
 import sys
 import os
@@ -99,26 +98,38 @@ def create_folium_map(towers_df: pd.DataFrame, coverage: np.ndarray,
     """Build an interactive folium map with heatmap, gap markers and tower markers."""
     m = folium.Map(location=[47.5, 19.1], zoom_start=11, tiles='OpenStreetMap')
 
-    heat_data = []
     H, W = coverage.shape
-    for i in range(H):
-        for j in range(W):
-            if coverage[i, j] > 0:
-                weight = min(coverage[i, j] / 5.0, 1.0)
-                heat_data.append([grid_lat[i, j], grid_lon[i, j], weight])
-    HeatMap(heat_data, name='Coverage', min_opacity=0.3,
-            radius=15, blur=20).add_to(m)
 
+    # Coverage raszter overlay: a 2D gridet RGBA kepkent rakjuk a terkepre.
+    # Igy a fedettség a koordinatakhoz van rogzitve es zoom-on simán skalazodik
+    # (ellentetben a folium HeatMap pluginnal, ami pixelben dolgozik es csempes mintat ad).
+    vmax = int(coverage.max())
+    rgba = _coverage_rgba(coverage, 'YlOrRd', vmax, max_alpha=0.75)
+    rgba_img = np.flipud(rgba)  # ImageOverlay: north-up; a coverage [0,0] = south-west
+    bounds = [[float(grid_lat[0, 0]),  float(grid_lon[0, 0])],
+              [float(grid_lat[-1, 0]), float(grid_lon[0, -1])]]
+    folium.raster_layers.ImageOverlay(
+        image=rgba_img,
+        bounds=bounds,
+        opacity=1.0,  # az alpha mar bele van kodolva az RGBA-ba
+        name='Coverage',
+        interactive=False,
+        cross_origin=False,
+        mercator_project=True,
+    ).add_to(m)
+
+    # Gap markers: minden 5. cellat mintavetelezunk (suruseg-csokkentes)
     gap_group = folium.FeatureGroup(name='Gap areas')
     gap_mask = stats['gap_mask']
-    for i in range(0, H, 5):
-        for j in range(0, W, 5):
-            if gap_mask[i, j]:
-                folium.CircleMarker(
-                    location=[grid_lat[i, j], grid_lon[i, j]],
-                    radius=3, color='red', fill=True,
-                    fill_opacity=0.5, weight=0,
-                ).add_to(gap_group)
+    sub_mask = gap_mask[::5, ::5]
+    gap_lats = grid_lat[::5, ::5][sub_mask]
+    gap_lons = grid_lon[::5, ::5][sub_mask]
+    for lat, lon in zip(gap_lats, gap_lons):
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=3, color='red', fill=True,
+            fill_opacity=0.5, weight=0,
+        ).add_to(gap_group)
     gap_group.add_to(m)
 
     tower_group = folium.FeatureGroup(name='Towers')
