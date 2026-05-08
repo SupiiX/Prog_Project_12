@@ -23,21 +23,58 @@ RADIO_COLORS = {
 # Belso segedfüggvenyek
 # ---------------------------------------------------------------------------
 
+_BASEMAP_WARNED = False  # one-shot warning flag (avoid spam across panels)
+
+
 def _try_add_basemap(ax, bbox: dict, alpha: float = 0.85) -> None:
-    """Add OSM basemap tiles under the axes (zorder=0). Silently skips on failure."""
+    """Add OSM basemap tiles under the axes (zorder=0).
+
+    Tries multiple providers with a real User-Agent (OSM blocks the default
+    contextily UA with HTTP 403). Prints a single warning per session if all
+    providers fail, so missing basemaps are visible instead of silent.
+    """
+    global _BASEMAP_WARNED
     try:
         import contextily as ctx
-        ax.set_xlim(bbox['lon_min'], bbox['lon_max'])
-        ax.set_ylim(bbox['lat_min'], bbox['lat_max'])
-        ctx.add_basemap(
-            ax,
-            crs='EPSG:4326',
-            source=ctx.providers.OpenStreetMap.Mapnik,
-            zorder=0,
-            alpha=alpha,
-        )
+    except ImportError:
+        if not _BASEMAP_WARNED:
+            print("  [WARN] basemap disabled: 'contextily' not installed. "
+                  "Install with: pip install contextily")
+            _BASEMAP_WARNED = True
+        return
+
+    # OSM Tile Usage Policy requires a descriptive User-Agent
+    try:
+        ctx.tile.USER_AGENT = "MobileTowerCoverageMapper/1.0 (+research)"
     except Exception:
         pass
+
+    ax.set_xlim(bbox['lon_min'], bbox['lon_max'])
+    ax.set_ylim(bbox['lat_min'], bbox['lat_max'])
+
+    providers = [
+        ('CartoDB.Positron', getattr(ctx.providers.CartoDB, 'Positron', None)),
+        ('OpenStreetMap.Mapnik', ctx.providers.OpenStreetMap.Mapnik),
+    ]
+
+    last_err = None
+    for name, src in providers:
+        if src is None:
+            continue
+        try:
+            ctx.add_basemap(
+                ax, crs='EPSG:4326', source=src,
+                zorder=0, alpha=alpha,
+            )
+            return
+        except Exception as e:
+            last_err = (name, type(e).__name__, str(e)[:120])
+
+    if not _BASEMAP_WARNED and last_err is not None:
+        name, etype, msg = last_err
+        print(f"  [WARN] basemap fetch failed ({name} -> {etype}: {msg}). "
+              f"Check internet connectivity; figures will render without OSM background.")
+        _BASEMAP_WARNED = True
 
 
 def _log_norm(vmax: int) -> mcolors.LogNorm:
