@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "output-server",
+      "runtimeExecutable": "X:/Prog_2/Prog_Project_12/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "output"],
+      "port": 8765
+    }
+  ]
+}

@@ -12,7 +12,10 @@ from tkinter import ttk, messagebox
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import OUTPUT_MAP_HTML, OUTPUT_HEATMAP_PNG, OUTPUT_SIM_PNG
+from config import (
+    OUTPUT_MAP_HTML, OUTPUT_GAP_HTML, OUTPUT_SIM_HTML,
+    OUTPUT_HEATMAP_PNG, OUTPUT_GAP_PNG, OUTPUT_SIM_PNG,
+)
 import main as pipeline
 
 
@@ -22,7 +25,7 @@ class LauncherApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title("Mobile Tower Coverage Mapper")
-        root.geometry("420x340")
+        root.geometry("420x440")
         root.resizable(False, False)
 
         frame = ttk.Frame(root, padding=20)
@@ -52,13 +55,23 @@ class LauncherApp:
         ttk.Label(frame, text="Open results:",
                   font=('Segoe UI', 9, 'bold')).pack(anchor='w', pady=(0, 4))
 
-        ttk.Button(frame, text="Interactive map (HTML)",
+        ttk.Button(frame, text="Coverage map (HTML)",
                    command=lambda: self._open(OUTPUT_MAP_HTML, in_browser=True)
                    ).pack(fill=tk.X, pady=2)
-        ttk.Button(frame, text="Heatmap (PNG)",
+        ttk.Button(frame, text="Gap analysis (HTML)",
+                   command=lambda: self._open(OUTPUT_GAP_HTML, in_browser=True)
+                   ).pack(fill=tk.X, pady=2)
+        ttk.Button(frame, text="Network expansion (HTML)",
+                   command=lambda: self._open(OUTPUT_SIM_HTML, in_browser=True)
+                   ).pack(fill=tk.X, pady=2)
+        ttk.Separator(frame).pack(fill=tk.X, pady=4)
+        ttk.Button(frame, text="Coverage overview (PNG)",
                    command=lambda: self._open(OUTPUT_HEATMAP_PNG)
                    ).pack(fill=tk.X, pady=2)
-        ttk.Button(frame, text="Simulation (PNG)",
+        ttk.Button(frame, text="Gap analysis (PNG)",
+                   command=lambda: self._open(OUTPUT_GAP_PNG)
+                   ).pack(fill=tk.X, pady=2)
+        ttk.Button(frame, text="Network expansion (PNG)",
                    command=lambda: self._open(OUTPUT_SIM_PNG)
                    ).pack(fill=tk.X, pady=2)
 

@@ -20,7 +20,9 @@
       "Bash(.venv/Scripts/python.exe -m pip install tkintermapview --quiet)",
       "Bash(.venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('app.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
       "Bash(.venv/Scripts/python.exe -c \"import tkintermapview; print\\('tkintermapview version:', tkintermapview.__version__\\)\")",
-      "Bash(Select-Object FullName, Length)"
+      "Bash(Select-Object FullName, Length)",
+      "Bash(start output/coverage_map.html)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

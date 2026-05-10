@@ -43,6 +43,24 @@ def _add_tower_to_grid(coverage: np.ndarray, grid_lat: np.ndarray, grid_lon: np.
     coverage[lat_lo:lat_hi, lon_lo:lon_hi] += (dist_m <= radius).astype(np.int16)
 
 
+def _per_tower_standalone_gap_reduction(coverage: np.ndarray, grid_lat: np.ndarray,
+                                         grid_lon: np.ndarray, new_towers: list,
+                                         cell_area_km2: float) -> list:
+    """
+    For each new tower, compute the gap-area (km²) it would close if placed alone.
+    Independent metric - diagnostic ranking that does NOT sum to the total
+    (overlaps are double-counted), but tells you which placements pull weight.
+    """
+    contribs = []
+    for tower in new_towers:
+        scratch = coverage.copy()
+        _add_tower_to_grid(scratch, grid_lat, grid_lon,
+                           tower['lat'], tower['lon'], tower['radius'])
+        gap_fixed_cells = int(((coverage == 0) & (scratch >= 1)).sum())
+        contribs.append(gap_fixed_cells * cell_area_km2)
+    return contribs
+
+
 def simulate_new_towers(coverage: np.ndarray, grid_lat: np.ndarray, grid_lon: np.ndarray,
                          new_towers: list, original_stats: dict) -> dict:
     new_coverage = coverage.copy()
@@ -57,14 +75,20 @@ def simulate_new_towers(coverage: np.ndarray, grid_lat: np.ndarray, grid_lon: np
     gap_delta = original_stats['gap_area_km2'] - new_stats['gap_area_km2']
     gap_pct   = gap_delta / original_stats['gap_area_km2'] * 100 if original_stats['gap_area_km2'] > 0 else 0.0
 
+    per_tower = _per_tower_standalone_gap_reduction(
+        coverage, grid_lat, grid_lon, new_towers,
+        original_stats['cell_area_km2'],
+    )
+
     return {
-        'before':             original_stats,
-        'after':              new_stats,
-        'new_towers':         new_towers,
-        'gap_reduction_km2':  gap_delta,
-        'gap_reduction_pct':  gap_pct,
-        'original_grid':      coverage,
-        'new_coverage_grid':  new_coverage,
+        'before':                  original_stats,
+        'after':                   new_stats,
+        'new_towers':              new_towers,
+        'gap_reduction_km2':       gap_delta,
+        'gap_reduction_pct':       gap_pct,
+        'original_grid':           coverage,
+        'new_coverage_grid':       new_coverage,
+        'per_tower_contribution':  per_tower,
     }
 
 

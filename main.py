@@ -16,7 +16,9 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf8'):
 from config import (
     BBOX, CITY, MCC, GRID_RESOLUTION,
     RAW_DATA_PATH, PROCESSED_PATH, COVERAGE_GRID_PATH,
-    OUTPUT_MAP_HTML, OUTPUT_HEATMAP_PNG, OUTPUT_SIM_PNG,
+    OUTPUT_MAP_HTML, OUTPUT_HEATMAP_PNG,
+    OUTPUT_GAP_PNG, OUTPUT_GAP_HTML,
+    OUTPUT_SIM_PNG, OUTPUT_SIM_HTML,
     MANUAL_NEW_TOWERS,
 )
 from src.data_loader import load_towers, clean_towers, save_processed
@@ -25,7 +27,10 @@ from src.rasterizer import create_grid, rasterize_coverage
 from src.gap_analyzer import analyze_gaps, find_gap_clusters, compute_gap_polygons
 from src.visualizer import (
     create_folium_map,
+    create_gap_analysis_map,
+    create_simulation_map,
     create_heatmap_figure,
+    create_gap_analysis_figure,
     create_simulation_figure,
 )
 from src.simulator import generate_hypothetical_towers, simulate_new_towers
@@ -94,9 +99,20 @@ def main():
     print(f"  [OK] Interactive map: {OUTPUT_MAP_HTML}")
 
     fig = create_heatmap_figure(coverage, BBOX, stats, towers)
-    fig.savefig(OUTPUT_HEATMAP_PNG, dpi=150, bbox_inches='tight')
+    fig.savefig(OUTPUT_HEATMAP_PNG, dpi=200, bbox_inches='tight')
     plt.close(fig)
     print(f"  [OK] Heatmap: {OUTPUT_HEATMAP_PNG}")
+
+    fig_gap = create_gap_analysis_figure(coverage, stats, clusters,
+                                          grid_lat, grid_lon, BBOX)
+    fig_gap.savefig(OUTPUT_GAP_PNG, dpi=200, bbox_inches='tight')
+    plt.close(fig_gap)
+    print(f"  [OK] Gap analysis: {OUTPUT_GAP_PNG}")
+
+    gap_map = create_gap_analysis_map(coverage, stats, clusters,
+                                       grid_lat, grid_lon, towers)
+    gap_map.save(OUTPUT_GAP_HTML)
+    print(f"  [OK] Gap analysis (interactive): {OUTPUT_GAP_HTML}")
 
     new_towers = (MANUAL_NEW_TOWERS if MANUAL_NEW_TOWERS
                   else generate_hypothetical_towers(clusters, towers))
@@ -104,18 +120,25 @@ def main():
     sim = simulate_new_towers(coverage, grid_lat, grid_lon, new_towers, stats)
 
     fig3 = create_simulation_figure(sim, grid_lat, grid_lon, BBOX)
-    fig3.savefig(OUTPUT_SIM_PNG, dpi=150, bbox_inches='tight')
+    fig3.savefig(OUTPUT_SIM_PNG, dpi=200, bbox_inches='tight')
     plt.close(fig3)
+
+    sim_map = create_simulation_map(sim, grid_lat, grid_lon)
+    sim_map.save(OUTPUT_SIM_HTML)
 
     print(f"  [OK] Gap reduction: {sim['gap_reduction_km2']:.2f} km2 "
           f"({sim['gap_reduction_pct']:.1f}%)")
     print(f"  [OK] Simulation figure: {OUTPUT_SIM_PNG}")
+    print(f"  [OK] Simulation (interactive): {OUTPUT_SIM_HTML}")
 
     # --- Osszefoglalo ---
     print("\n" + "=" * 55)
     print("  DONE! Output files:")
-    print(f"    {OUTPUT_MAP_HTML}   <- open in browser")
+    print(f"    {OUTPUT_MAP_HTML}        <- open in browser")
+    print(f"    {OUTPUT_GAP_HTML}        <- open in browser")
+    print(f"    {OUTPUT_SIM_HTML}  <- open in browser")
     print(f"    {OUTPUT_HEATMAP_PNG}")
+    print(f"    {OUTPUT_GAP_PNG}")
     print(f"    {OUTPUT_SIM_PNG}")
     print("=" * 55)
 
